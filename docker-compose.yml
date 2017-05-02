@@ -10,23 +10,23 @@ services:
     logging:
       driver: none
 
-  kafka:
+  broker:
     image: confluentinc/cp-enterprise-kafka:3.2.0
     ports:
     - 9092:9092
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: plaintext://kafka:9092
-      KAFKA_JMX_HOSTNAME: kafka
+      KAFKA_ADVERTISED_LISTENERS: plaintext://broker:9092
+      KAFKA_JMX_HOSTNAME: broker
       KAFKA_JMX_PORT: 9010
       KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:9092
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:9092
       CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
       CONFLUENT_METRICS_REPORTER_PUBLISH_MS: 1000
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
     depends_on: [zookeeper]
 
-  rest:
+  rest-proxy:
     image: confluentinc/cp-kafka-rest:3.2.0
     ports:
     - 8082:8082
@@ -36,7 +36,7 @@ services:
       KAFKA_REST_HOST_NAME: "rest"
       KAFKA_REST_JMX_HOSTNAME: rest
       KAFKA_REST_JMX_PORT: 9010
-    depends_on: [zookeeper, kafka]
+    depends_on: [zookeeper, broker]
   
   schema-registry:
     image: confluentinc/cp-schema-registry:3.2.0
@@ -48,7 +48,7 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
       #SCHEMA_REGISTRY_DEBUG: 0
-    depends_on: [zookeeper, kafka]
+    depends_on: [zookeeper, broker]
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:3.2.0
@@ -56,17 +56,11 @@ services:
     - 9021:9021
     environment:
       CONTROL_CENTER_ZOOKEEPER_CONNECT: zookeeper:2181
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:9092
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: broker:9092
       CONTROL_CENTER_REPLICATION_FACTOR: 1
-    depends_on: [zookeeper, kafka]
+    depends_on: [zookeeper, broker]
 
-  manager:
-    image: sheepkiller/kafka-manager:latest
+  jolokia-proxy:
+    image: fvigotti/jolokia-proxy
     ports:
-      - 9000:9000
-    depends_on:
-      - zookeeper
-      - kafka
-    environment:
-      ZK_HOSTS: zookeeper:2181
-      KM_ARGS: -Djava.net.preferIPv4Stack=true
+    - 8080:8080
