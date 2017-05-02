@@ -60,3 +60,13 @@ services:
       CONTROL_CENTER_REPLICATION_FACTOR: 1
     depends_on: [zookeeper, kafka]
 
+  manager:
+    image: sheepkiller/kafka-manager:latest
+    ports:
+      - 9000:9000
+    depends_on:
+      - zookeeper
+      - kafka
+    environment:
+      ZK_HOSTS: zookeeper:2181
+      KM_ARGS: -Djava.net.preferIPv4Stack=true
